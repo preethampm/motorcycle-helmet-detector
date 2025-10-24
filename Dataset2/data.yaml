@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['motorcycle-helmets']
+
+roboflow:
+  workspace: chicken-detector-axcik
+  project: motorcyclist-helmet-detector-pktwq
+  version: 6
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/chicken-detector-axcik/motorcyclist-helmet-detector-pktwq/dataset/6

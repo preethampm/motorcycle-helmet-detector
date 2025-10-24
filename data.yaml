@@ -1,0 +1,6 @@
+train: C:/Users/p14pr/Desktop/helmet/Dataset2/train/images
+val: C:/Users/p14pr/Desktop/helmet/Dataset2/valid/images
+test: C:/Users/p14pr/Desktop/helmet/Dataset2/test/images
+
+nc: 2
+names: ['helmet', 'no_helmet']
