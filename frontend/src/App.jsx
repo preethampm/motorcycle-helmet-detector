@@ -37,14 +37,28 @@ function App() {
     return (label.includes('helmet') || label === 'motorcycle-helmets') && !label.includes('no');
   });
 
-  // Debug logging
+  // Grace period logic
+  const [isSafe, setIsSafe] = useState(false);
+  const graceTimeoutRef = useRef(null);
+
   useEffect(() => {
-    if (detections.length > 0) {
-      console.log("Detections:", detections);
-      console.log("Valid:", validDetections);
-      console.log("Helmet Detected:", helmetDetected);
+    if (helmetDetected) {
+      // Helmet found: Immediate safety
+      if (graceTimeoutRef.current) {
+        clearTimeout(graceTimeoutRef.current);
+        graceTimeoutRef.current = null;
+      }
+      setIsSafe(true);
+    } else {
+      // Helmet lost: Wait 5 seconds before warning
+      if (isSafe && !graceTimeoutRef.current) {
+        graceTimeoutRef.current = setTimeout(() => {
+          setIsSafe(false);
+          graceTimeoutRef.current = null;
+        }, 5000);
+      }
     }
-  }, [detections, validDetections, helmetDetected]);
+  }, [helmetDetected, isSafe]);
 
   const startBeep = () => {
     if (!audioCtxRef.current) {
@@ -88,20 +102,25 @@ function App() {
     }
   };
 
+  // Audio control effect
   useEffect(() => {
-    // setHasHelmet(helmetDetected); // Removed redundant state
-
-    if (!helmetDetected && isConnected && frame) {
-      // Only beep if we have a frame (system is running) and no helmet
+    if (!isSafe && isConnected && frame) {
+      // Only beep if NOT safe (buffer expired or never safe)
       startBeep();
     } else {
       stopBeep();
     }
-  }, [helmetDetected, isConnected, frame]);
+  }, [isSafe, isConnected, frame]);
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => stopBeep();
+    return () => {
+      stopBeep();
+      if (graceTimeoutRef.current) {
+        clearTimeout(graceTimeoutRef.current);
+        graceTimeoutRef.current = null;
+      }
+    };
   }, []);
 
   return (
@@ -144,7 +163,7 @@ function App() {
             </div>
           </div>
 
-          {!helmetDetected && (
+          {!isSafe && (
             <div className="status-indicator status-danger">
               WEAR HELMET
             </div>
@@ -154,8 +173,9 @@ function App() {
           <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
             <div style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>Debug Panel:</div>
             <div>Last Update: {new Date().toLocaleTimeString()}</div>
-            <div style={{ fontWeight: 'bold', color: helmetDetected ? 'var(--success)' : 'var(--danger)' }}>
-              System Status: {helmetDetected ? 'SAFE (Helmet Found)' : 'WARNING (No Helmet)'}
+            <div style={{ fontWeight: 'bold', color: isSafe ? 'var(--success)' : 'var(--danger)' }}>
+              System Status: {isSafe ? 'SAFE' : 'WARNING'}
+              {isSafe && !helmetDetected ? ' (Buffer Active)' : ''}
             </div>
             <div>Raw Labels: {detections.map(d => d.label).join(', ') || 'None'}</div>
             <div style={{ marginTop: '0.5rem' }}>Valid Detections ({Math.round(confidenceThreshold * 100)}%+):</div>
