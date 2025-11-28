@@ -35,27 +35,40 @@ function App() {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
-    if (oscillatorRef.current) return; // Already playing
+    // If already beeping (interval set), do nothing
+    if (oscillatorRef.current) return;
 
-    const osc = audioCtxRef.current.createOscillator();
-    const gainNode = audioCtxRef.current.createGain();
+    const playTone = () => {
+      const osc = audioCtxRef.current.createOscillator();
+      const gainNode = audioCtxRef.current.createGain();
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime); // 800Hz beep
+      // Seatbelt chime sound (two tones or a specific wave)
+      // Sine wave is smoother, like a chime
+      osc.type = 'sine';
+      // High pitch for seatbelt warning (usually around 700-1000Hz)
+      osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
 
-    // Pulse effect
-    gainNode.gain.setValueAtTime(0.1, audioCtxRef.current.currentTime);
+      // Envelope for the "ding" effect
+      const now = audioCtxRef.current.currentTime;
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05); // Attack
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5); // Decay
 
-    osc.connect(gainNode);
-    gainNode.connect(audioCtxRef.current.destination);
-    osc.start();
-    oscillatorRef.current = osc;
+      osc.connect(gainNode);
+      gainNode.connect(audioCtxRef.current.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.6);
+    };
+
+    // Play immediately then loop
+    playTone();
+    oscillatorRef.current = setInterval(playTone, 800); // Repeat every 800ms
   };
 
   const stopBeep = () => {
     if (oscillatorRef.current) {
-      oscillatorRef.current.stop();
-      oscillatorRef.current.disconnect();
+      clearInterval(oscillatorRef.current);
       oscillatorRef.current = null;
     }
   };
@@ -116,9 +129,11 @@ function App() {
             </div>
           </div>
 
-          <div className={`status-indicator ${hasHelmet ? 'status-safe' : 'status-danger'}`}>
-            {hasHelmet ? 'HELMET DETECTED' : 'WEAR HELMET'}
-          </div>
+          {!hasHelmet && (
+            <div className="status-indicator status-danger">
+              WEAR HELMET
+            </div>
+          )}
         </div>
       </div>
     </div>

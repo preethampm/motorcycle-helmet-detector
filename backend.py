@@ -23,7 +23,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 break
 
             # Run inference
-            results = model(frame, stream=True)
+            results = model(frame, stream=True, conf=0.05)
             
             detections = []
             
