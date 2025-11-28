@@ -31,8 +31,10 @@ function App() {
   const validDetections = detections.filter(d => d.conf >= confidenceThreshold);
   const helmetDetected = validDetections.some(d => {
     const label = d.label.toLowerCase().trim();
-    // Match "helmet" or "motorcycle-helmet", but explicitly exclude "no helmet"
-    return (label === 'helmet' || label === 'motorcycle-helmet') && !label.includes('no');
+    // Match anything containing "helmet" (e.g. "motorcycle-helmet", "helmet"), 
+    // but explicitly exclude "no" (e.g. "no helmet", "no-helmet")
+    // Also explicitly check for "motorcycle-helmets" (plural) as reported by user
+    return (label.includes('helmet') || label === 'motorcycle-helmets') && !label.includes('no');
   });
 
   // Debug logging
@@ -152,12 +154,15 @@ function App() {
           <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
             <div style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>Debug Panel:</div>
             <div>Last Update: {new Date().toLocaleTimeString()}</div>
+            <div style={{ fontWeight: 'bold', color: helmetDetected ? 'var(--success)' : 'var(--danger)' }}>
+              System Status: {helmetDetected ? 'SAFE (Helmet Found)' : 'WARNING (No Helmet)'}
+            </div>
             <div>Raw Labels: {detections.map(d => d.label).join(', ') || 'None'}</div>
             <div style={{ marginTop: '0.5rem' }}>Valid Detections ({Math.round(confidenceThreshold * 100)}%+):</div>
             {validDetections.length > 0 ? (
               validDetections.map((d, i) => {
                 const label = d.label.toLowerCase();
-                const isSafe = (label === 'helmet' || label === 'motorcycle-helmet') && !label.includes('no');
+                const isSafe = label.includes('helmet') && !label.includes('no');
                 return (
                   <div key={i} style={{ color: isSafe ? 'var(--success)' : 'var(--danger)' }}>
                     • {d.label} ({Math.round(d.conf * 100)}%) {isSafe ? '✓' : '✗'}
