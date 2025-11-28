@@ -29,16 +29,7 @@ function App() {
 
   // Filter detections based on threshold
   const validDetections = detections.filter(d => d.conf >= confidenceThreshold);
-  // Case-insensitive check and trim whitespace
-  const helmetDetected = validDetections.some(d => d.label.toLowerCase().trim() === 'helmet');
-
-  // Debug logging
-  useEffect(() => {
-    if (detections.length > 0) {
-      console.log("Detections:", detections.map(d => `${d.label} (${d.conf})`));
-      console.log("Helmet Detected:", helmetDetected);
-    }
-  }, [detections, helmetDetected]);
+  const helmetDetected = validDetections.some(d => d.label === 'helmet');
 
   const startBeep = () => {
     if (!audioCtxRef.current) {
@@ -83,7 +74,7 @@ function App() {
   };
 
   useEffect(() => {
-    setHasHelmet(helmetDetected);
+    // setHasHelmet(helmetDetected); // Removed redundant state
 
     if (!helmetDetected && isConnected && frame) {
       // Only beep if we have a frame (system is running) and no helmet
@@ -117,19 +108,6 @@ function App() {
                 threshold={confidenceThreshold}
                 imageSrc={frame}
               />
-              {/* Debug Overlay */}
-              <div style={{
-                position: 'absolute',
-                top: 10,
-                left: 10,
-                background: 'rgba(0,0,0,0.7)',
-                padding: '5px',
-                fontSize: '12px',
-                color: '#fff',
-                pointerEvents: 'none'
-              }}>
-                Debug: {validDetections.map(d => d.label).join(', ') || 'None'}
-              </div>
             </div>
           ) : (
             <div style={{ color: 'var(--text-dim)' }}>Waiting for video feed...</div>
@@ -151,7 +129,7 @@ function App() {
             </div>
           </div>
 
-          {!hasHelmet && (
+          {!helmetDetected && (
             <div className="status-indicator status-danger">
               WEAR HELMET
             </div>
