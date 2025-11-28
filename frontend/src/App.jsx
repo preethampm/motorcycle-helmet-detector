@@ -29,7 +29,11 @@ function App() {
 
   // Filter detections based on threshold
   const validDetections = detections.filter(d => d.conf >= confidenceThreshold);
-  const helmetDetected = validDetections.some(d => d.label.toLowerCase().trim() === 'helmet');
+  const helmetDetected = validDetections.some(d => {
+    const label = d.label.toLowerCase().trim();
+    // Match "helmet" or "motorcycle-helmet", but explicitly exclude "no helmet"
+    return (label === 'helmet' || label === 'motorcycle-helmet') && !label.includes('no');
+  });
 
   // Debug logging
   useEffect(() => {
@@ -151,11 +155,15 @@ function App() {
             <div>Raw Labels: {detections.map(d => d.label).join(', ') || 'None'}</div>
             <div style={{ marginTop: '0.5rem' }}>Valid Detections ({Math.round(confidenceThreshold * 100)}%+):</div>
             {validDetections.length > 0 ? (
-              validDetections.map((d, i) => (
-                <div key={i} style={{ color: d.label.toLowerCase().includes('helmet') ? 'var(--success)' : 'var(--danger)' }}>
-                  • {d.label} ({Math.round(d.conf * 100)}%)
-                </div>
-              ))
+              validDetections.map((d, i) => {
+                const label = d.label.toLowerCase();
+                const isSafe = (label === 'helmet' || label === 'motorcycle-helmet') && !label.includes('no');
+                return (
+                  <div key={i} style={{ color: isSafe ? 'var(--success)' : 'var(--danger)' }}>
+                    • {d.label} ({Math.round(d.conf * 100)}%) {isSafe ? '✓' : '✗'}
+                  </div>
+                );
+              })
             ) : (
               <div>None (System sees nothing above threshold)</div>
             )}
