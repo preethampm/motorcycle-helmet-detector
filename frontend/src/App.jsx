@@ -55,7 +55,7 @@ function App() {
         graceTimeoutRef.current = setTimeout(() => {
           setIsSafe(false);
           graceTimeoutRef.current = null;
-        }, 5000);
+        }, 3000);
       }
     }
   }, [helmetDetected, isSafe]);
