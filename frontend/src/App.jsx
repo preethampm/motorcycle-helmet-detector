@@ -29,7 +29,16 @@ function App() {
 
   // Filter detections based on threshold
   const validDetections = detections.filter(d => d.conf >= confidenceThreshold);
-  const helmetDetected = validDetections.some(d => d.label === 'helmet');
+  const helmetDetected = validDetections.some(d => d.label.toLowerCase().trim() === 'helmet');
+
+  // Debug logging
+  useEffect(() => {
+    if (detections.length > 0) {
+      console.log("Detections:", detections);
+      console.log("Valid:", validDetections);
+      console.log("Helmet Detected:", helmetDetected);
+    }
+  }, [detections, validDetections, helmetDetected]);
 
   const startBeep = () => {
     if (!audioCtxRef.current) {
@@ -134,6 +143,23 @@ function App() {
               WEAR HELMET
             </div>
           )}
+
+          {/* Debug Info */}
+          <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+            <div style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>Debug Panel:</div>
+            <div>Last Update: {new Date().toLocaleTimeString()}</div>
+            <div>Raw Labels: {detections.map(d => d.label).join(', ') || 'None'}</div>
+            <div style={{ marginTop: '0.5rem' }}>Valid Detections ({Math.round(confidenceThreshold * 100)}%+):</div>
+            {validDetections.length > 0 ? (
+              validDetections.map((d, i) => (
+                <div key={i} style={{ color: d.label.toLowerCase().includes('helmet') ? 'var(--success)' : 'var(--danger)' }}>
+                  • {d.label} ({Math.round(d.conf * 100)}%)
+                </div>
+              ))
+            ) : (
+              <div>None (System sees nothing above threshold)</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
